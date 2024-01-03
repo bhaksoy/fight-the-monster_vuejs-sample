@@ -40,5 +40,22 @@ new Vue({
         }
    
 
+    },
+    
+    watch: {
+        player_heal: function(value){
+            if(value <= 0){
+                this.player_heal = 0;
+
+            } else if(value >= 100){
+                this.player_heal = 100;
+            }
+        },
+            monster_heal: function(value){
+                if(value <= 0){
+                    this.monster_heal =0;
+                
+            }
+        }
     }
 })
