@@ -1,58 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Canavarla Savaş</title>
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <link rel="stylesheet" href="css/foundation.min.css">
-    <link rel="stylesheet" href="css/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canavarla savaş</title>
+  <link rel="stylesheet" href="app.css">
 </head>
 <body>
-<div id="app">
-    <section class="row">
-        <div class="small-6 columns">
-            <h1 class="text-center">SEN</h1>
-            <div class="healthbar">
-                <div :style="{width: player_heal + '%'}" class="healthbar text-center" style="background-color: green; margin: 0; color: white;">
-            %{{ player_heal }}
-                </div>
-            </div>
-        </div>
-        <div class="small-6 columns">
-            <h1 class="text-center">CANAVAR</h1>
-            <div class="healthbar">
-                <div :style="{width: monster_heal + '%'}" class="healthbar text-center" style="background-color: green; margin: 0; color: white;">
-            %{{ monster_heal }}
-                </div>
-            </div>
-        </div>
-    </section>
-    <section class="row controls" v-if="!game_is_on">
-        <div class="small-12 columns">
-            <button id="start-game" @click="start_game">YENİ OYUN</button>
-        </div>
-    </section>
-    <section class="row controls" v-if="game_is_on">
-        <div class="small-12 columns">
-            <button id="attack" @click="attack> SALDIRI </button>
-            <button id="special-attack" @click="special_attack> ÖZEL SALDIRI </button>
-            <button id="heal" @click="heal_up"> İLK YARDIM </button>
-            <button id="give-up" @click="give_up"> PES ET! </button>
-        </div>
-    </section>
-    <section class="row log" v-if="logs.length > 0" >
-        <div class="small-12 columns">
-            <ul>
-                <li
 
-                :class="{ 'player-turn': log.turn == 'p' , 'monster-turn' : log.turn == 'm'}"
-                v-for="log in logs" > {{ log.text }} 
-               
-            </li>
-            </ul>
-        </div>
-    </section>
+<div id="app">
+  <div v-if="!game_is_on">
+    <button @click="start_game">Oyuna Başla</button>
+  </div>
+  <div v-else>
+    <p>Oyuncu Can: %{{ player_heal }}</p>
+    <p>Canavar Can: %{{ monster_heal }}</p>
+
+    <button @click="attack">Saldır</button>
+    <button @click="special_attack">Özel Saldırı</button>
+    <button @click="heal_up">İyileş</button>
+    <button @click="give_up">Pes Et</button>
+
+    <ul>
+      <li v-for="(log, index) in logs" :key="index">{{ log.text }}</li>
+    </ul>
+  </div>
 </div>
 
-<script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+<script>
+  new Vue({
+    el: "#app",
+    data: {
+      player_heal: 100,
+      monster_heal: 100,
+      game_is_on: false,
+      logs: []
+    },
+    methods: {
+      start_game: function() {
+        this.game_is_on = true;
+      },
+      attack: function() {
+        this.performAttack("OYUNCU ATAĞI");
+      },
+      special_attack: function() {
+        this.performAttack("ÖZEL MOD OYUNCU ATAĞI", 25);
+      },
+      heal_up: function() {
+        const point = Math.ceil(Math.random() * 20);
+        this.player_heal = Math.min(this.player_heal + point, 100);
+        this.add_to_log({ turn: "p", text: "OYUNCU CAN KAZANDI (" + point + ")" });
+        this.monster_attack();
+      },
+      give_up: function() {
+        if (window.confirm("Oyunu kaybettin... Tekrar denemeye ne dersin?")) {
+          this.resetGame();
+        }
+      },
+      monster_attack: function() {
+        this.performAttack("CANAVAR ATAĞI", 15, "m");
+      },
+      performAttack: function(attackType, maxPoint = 10, turn = "p") {
+        const point = Math.ceil(Math.random() * maxPoint);
+        if (turn === "p") {
+          this.monster_heal = Math.max(this.monster_heal - point, 0);
+        } else {
+          this.player_heal = Math.max(this.player_heal - point, 0);
+        }
+        this.add_to_log({ turn: turn, text: `${attackType} (${point})` });
+
+        if (turn === "p") {
+          this.monster_attack();
+        }
+      },
+      add_to_log: function(log) {
+        this.logs.push(log);
+      },
+      resetGame: function() {
+        this.player_heal = 100;
+        this.monster_heal = 100;
+        this.logs = [];
+        this.game_is_on = false;
+      }
+    },
+    watch: {
+      player_heal: function(value) {
+        if (value <= 0) {
+          if (window.confirm("Oyunu kaybettin... Tekrar denemeye ne dersin?")) {
+            this.resetGame();
+          }
+        } else if (value >= 100) {
+          this.player_heal = 100;
+        }
+      },
+      monster_heal: function(value) {
+        if (value <= 0) {
+          if (window.confirm("Oyunu kazandın! Yeni bir galibiyete ne dersin?")) {
+            this.resetGame();
+          }
+        }
+      }
+    }
+  });
+</script>
+
 </body>
 </html>
